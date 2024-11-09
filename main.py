@@ -58,6 +58,8 @@ def solve_sudoku(grid):
     mrv_domains = {(row, col): [num for num in range(1, 10) if is_valid(grid, row, col, num)]
                    for row in range(9) for col in range(9) if grid[row][col] == 0}
 
+    assignments = []
+
     def backtrack():
         cell = find_unassigned_location(grid, mrv_domains)
         if not cell:
@@ -66,6 +68,14 @@ def solve_sudoku(grid):
         row, col = cell
         for value in sorted(mrv_domains[(row, col)]):
             if is_valid(grid, row, col, value):
+                domain_size = len(mrv_domains[(row, col)])
+                degree = sum(1 for x in range(9) if (grid[row][x] == 0) or (grid[x][col] == 0))
+                
+                # Logging the assignment details
+                if len(assignments) < 4:
+                    assignments.append((f"Variable: ({row}, {col})", f"Domain size: {domain_size}", f"Degree: {degree}", f"Value assigned: {value}"))
+                    print(f"Assignment {len(assignments)} - Variable: ({row}, {col}), Domain size: {domain_size}, Degree: {degree}, Value assigned: {value}")
+
                 grid[row][col] = value
                 changes = forward_check(grid, row, col, value, mrv_domains)
 
