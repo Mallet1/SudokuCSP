@@ -5,10 +5,12 @@ def print_grid(grid):
         print(" ".join(str(num) if num != 0 else '.' for num in row))
 
 def is_valid(grid, row, col, num):
+    # Check row and column constraints
     for x in range(9):
         if grid[row][x] == num or grid[x][col] == num:
             return False
-
+        
+    # Check 3x3 box constraints
     start_row, start_col = 3 * (row // 3), 3 * (col // 3)
     for i in range(3):
         for j in range(3):
@@ -32,6 +34,8 @@ def find_unassigned_location(grid, mrv_domains):
 
 def forward_check(grid, row, col, value, mrv_domains):
     changes = []
+
+    # Remove the assigned value from domains of cells in the same row and column
     for x in range(9):
         if grid[row][x] == 0 and value in mrv_domains[(row, x)]:
             mrv_domains[(row, x)].remove(value)
@@ -41,6 +45,7 @@ def forward_check(grid, row, col, value, mrv_domains):
             mrv_domains[(x, col)].remove(value)
             changes.append((x, col, value))
 
+    # Remove the assigned value from domains of cells in the same 3x3 box
     start_row, start_col = 3 * (row // 3), 3 * (col // 3)
     for i in range(3):
         for j in range(3):
@@ -55,19 +60,23 @@ def undo_forward_check(mrv_domains, changes):
         mrv_domains[(row, col)].append(value)
 
 def solve_sudoku(grid):
+    # Initialize domains for all empty cells
     mrv_domains = {(row, col): [num for num in range(1, 10) if is_valid(grid, row, col, num)]
                    for row in range(9) for col in range(9) if grid[row][col] == 0}
 
     assignments = []
 
     def backtrack():
+        # Find the most constrained variable (MRV)
         cell = find_unassigned_location(grid, mrv_domains)
         if not cell:
             return True
 
         row, col = cell
+        # Try values from the cell's domain
         for value in sorted(mrv_domains[(row, col)]):
             if is_valid(grid, row, col, value):
+                # Calculate metrics for logging
                 domain_size = len(mrv_domains[(row, col)])
                 degree = sum(1 for x in range(9) if (grid[row][x] == 0) or (grid[x][col] == 0))
                 
@@ -76,6 +85,7 @@ def solve_sudoku(grid):
                     assignments.append((f"Variable: ({row}, {col})", f"Domain size: {domain_size}", f"Degree: {degree}", f"Value assigned: {value}"))
                     print(f"Assignment {len(assignments)} - Variable: ({row}, {col}), Domain size: {domain_size}, Degree: {degree}, Value assigned: {value}")
 
+                # Make assignment and update domains
                 grid[row][col] = value
                 changes = forward_check(grid, row, col, value, mrv_domains)
 
@@ -87,6 +97,7 @@ def solve_sudoku(grid):
 
         return False
 
+    # Solve and time the solution
     start_time = time.time()
     success = backtrack()
     end_time = time.time()
@@ -98,6 +109,9 @@ def solve_sudoku(grid):
     else:
         print("No solution exists or the computation was terminated after exceeding the time limit.")
 
+
+
+# Test grids are defined here...
 grid = [
     [0,0,1,0,0,2,0,0,0],
     [0,0,5,0,0,6,0,3,0],
